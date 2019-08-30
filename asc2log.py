@@ -65,9 +65,9 @@ class FileOutput:  # this class has one instance per input filename
 #        new.write(current_network, newString)
 
 #del new
-
+lastline = 0
+currentline = 0
 for line in fileinput.input(glob.glob("samples/*.csv")):  # TODO move this into a class rather than have 2 variants
-
     current_network = "HS CAN"
     if fileinput.isfirstline():  # checks if there is a new file, and if so then make a new output file
         new = FileOutput(fileinput.filename())
@@ -81,16 +81,21 @@ for line in fileinput.input(glob.glob("samples/*.csv")):  # TODO move this into 
             newString += ' '
         elif j == 7 and network_digits.match(lineToken):
             current_network = lineToken
-        elif j == 0 or j == 2 or j == 3 or j == 4 or j == 5 or j == 6 or j == 8 or j == 10 or j == 11:
+        elif j == 0 and hex_digits.match(lineToken):
+            lastline = currentline
+            currentline = int(lineToken)
+        elif j == 2 or j == 3 or j == 4 or j == 5 or j == 6 or j == 8 or j == 10 or j == 11:
             continue
-        else:
+        elif hex_digits.match(lineToken):
             newString += lineToken
             newString += ' '
     newString = newString[:-1]  # drop the last space
     newString += '\n'
 
-    # if hex_digits.match(newString):  # writes lines containing only valid chars to the new file
+    if currentline < 100:
+        print("lastline was " + str(lastline) + " and current line is " + str(currentline) + "\n")
+    if hex_digits.match(newString) and ((currentline - 1) == lastline):  # writes lines containing only valid chars to the new file
         # noinspection PyUnboundLocalVariable
-    new.write(current_network, newString)
+        new.write(current_network, newString)
 
 del new
