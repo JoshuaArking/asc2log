@@ -35,10 +35,12 @@ class FileOutput:  # this class has one instance per input filename
 
     def __del__(self):
         for network in list(self.networkList.keys()):
-            self.networkList[network].close()
+            if not self.networkList[network].closed:
+                self.networkList[network].close()
 
 
 for line in fileinput.input(glob.glob("samples/*.asc")):
+
     current_network = 1
     if fileinput.isfirstline():  # checks if there is a new file, and if so then make a new output file
         new = FileOutput(fileinput.filename())
@@ -58,6 +60,7 @@ for line in fileinput.input(glob.glob("samples/*.asc")):
     newString += '\n'
 
     if hex_digits.match(newString):  # writes lines containing only valid chars to the new file
-        new.write(current_network, newString)  # TODO need to fix 'new' can not be defined
+        # noinspection PyUnboundLocalVariable
+        new.write(current_network, newString)
 
-# TODO Need to implement some sort of garbage collection since the last file opened isn't ever closed
+del new
