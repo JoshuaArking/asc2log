@@ -98,8 +98,8 @@ for line in fileinput.input(glob.glob("samples/*.asc") + glob.glob("samples/*.cs
             elif token_count == current_tokens[12]:
                     line_dict[10] = lineToken
             elif current_tokens[0] == "asc":  # TODO find out why this is necessary
-                if token_count == current_tokens[13]:
-                    line_dict[11] = lineToken
+                if token_count == current_tokens[14]:
+                    current_network = int(lineToken)
             token_count += 1
 
     if current_tokens[0] == "csv": # TODO fix DLC in CSV files
