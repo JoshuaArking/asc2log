@@ -16,31 +16,28 @@ token_index_dict = {".asc": ["asc"," ",0,2,4,5,6,7,8,9,10,11,12,13,1],
 class Converter:
     def __init__(self, original_path: str):
         self.original_path:         str = original_path
-        self.original_filetype:     str = self.get_filetype(original_path)
+        self.original_filetype:     str = os.path.splitext(original_path)[1]
         self.token_indices:      [] = token_index_dict[self.original_filetype]
-        self.tokens:                DataFrame = None
 
-    def get_filetype(self, path):
-        filetype = os.path.splitext(path)[1]
-        return filetype
+    def convert_file(self):
+        for line in fileinput.input(self.original_path):
 
-    def read_file(self): #BROKEN
-        self.tokens = read_csv(self.original_path,
-                             header=None) # this is fast but can't use it, need to iterate for better control and filter
-        #REWORK THIS BEFORE DOING ANYTHING ELSE
-        print("read-in successful for " + self.original_path)
+            if fileinput.isfirstline():  # checks if there is a new file, and if so then make a new output file
+                new = FileOutput.FileOutput(fileinput.filename())
+                print("Created new file from " + fileinput.filename())
 
-    def tokenize(self): #BROKEN
-        for i, j in self.tokens.iterrows():
+            tokenList = line.split(self.token_indices[1])  # tokenize each line
+
             outString = ""
-            token_count = 1
+            token_count = 0
             line_dict: dict = {}
             current_network = 1
-            for k, lineToken in enumerate(j):  # go through the tokens and discard unneeded ones
-                print(str(lineToken) + " at " + str(token_count))
+
+            for j, lineToken in enumerate(tokenList):  # go through the tokens and discard unneeded ones
+
                 if lineToken is None:
                     continue
-                elif is_hex.match(str(lineToken)) or is_numeric.match(str(lineToken)) or network_digits.match(str(lineToken)):
+                elif is_hex.match(lineToken) or is_numeric.match(lineToken) or network_digits.match(lineToken):
 
                     if token_count == self.token_indices[2]:
                         line_dict[0] = lineToken
@@ -63,14 +60,40 @@ class Converter:
                     elif token_count == self.token_indices[11]:
                         line_dict[9] = lineToken
                     elif token_count == self.token_indices[12]:
-                            line_dict[10] = lineToken
+                        line_dict[10] = lineToken
                     elif token_count == self.token_indices[14]:
                         if self.token_indices[0] == "asc":
                             current_network = int(lineToken)
                         elif self.token_indices[0] == "csv":
                             current_network = str(lineToken)
                     token_count += 1
-            print(line_dict)
+            dlc = 8
+            if self.token_indices[0] == "csv":
+                for k in range(7):
+                    if line_dict.get(4 + k) is None:
+                        dlc -= 1
+                line_dict[2] = str(dlc)
+            else:
+                try:
+                    dlc = line_dict[2]
+                except KeyError:
+                    qqq = 1
+
+            for i in range(int(dlc) + 2):
+                if len(line_dict) > 0 and line_dict.get(0) is not None and line_dict.get(
+                        1) is not None and line_dict.get(2) is not None and line_dict.get(3) is not None:
+                    outString += str(line_dict.get(i))
+                    outString += " "
+            outString = outString[:-1]
+            if self.token_indices[0] == "csv" or self.token_indices[0] == "txt":
+                outString += "\n"
+
+            # print(outString)
+            if is_hex.match(outString):  # writes lines containing only valid chars to the new file
+                # noinspection PyUnboundLocalVariable
+                new.write(current_network, outString)
+
+        del new
 
 
 
